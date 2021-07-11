@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""
+Esse código tem a utilidade de pegar EMAILS QUE JÁ FORAM CONSIDERADOS SPAM, separar todos os emails dentro de uma arquivo mbox do 
+cliente de email(Thunderbird) e colocá-los em uma lista, para serem posteriormente colocados em uma lista de bloqueio.
+
+Disclaimer:
+Esse código está sendo criado com o principal objetivo de combater Spammers e Scammers. Esse projeto é aberto e pode ser utilizado
+por todos, porém a sua utilização para ajudar Spammers ou Scammers é totalmente desemcorajada e não apoiada pelos desemvolvedores.
+"""
+
+import re			# regex
+import tldextract	# separador de dominios
+
+# Caminho relativo do arquivo mbox para leitura
+mboxFile = "/home/jmed/.thunderbird/trxbe0w1.default-release/ImapMail/email-ssl.com.br/INBOX.sbd/SpamDaJo&AOM-omed"
+
+# Subpasta result para guardar os resultados
+resultFolder = "./resultado/"
+
+# Tuple de dominios que são nossos, não bloqueados.
+nossosDominios = ("")
+
+# Tuple de dominios que não serão bloqueados.
+dominiosLiberados = ("")
+
+# Tuple de dominios que são públicos, logo não tem como bloquear o dominio, mas poderemos bloquear o email todo (usuario@dominioPublico.com).
+dominiosPublicos = ("caixa.gov","bb.com.br","terra.com","vivo.com.br","picpay.com.br","globo.com","locaweb.com.br","bitdefender.com","docusign.com.br", "jus.br", "terra.com.br", "yahoo.com", "gmail.com", "outlook.com","hotmail.com", "icloud.com", "email-ssl.com.br","live.com", "uol.com.br", "bol.com.br", "ymail.com", "globomail.com", "gov.br","denatran.gov.br","mpf.mp.br","trt9.jus.br","receita.fazenda.gov.br","servicos.receita.fazenda.gov.br")
+
+# Declaração do array de dominios e emails de Spam
+emailsSpam = []
+
+# Leitura do arquivo mbox, vindo direto de uma pasta do cliente de email (Thunderbird).
+with open(mboxFile, encoding="ISO-8859-1") as file:
+	mboxContent = file.readlines()
+
+# Iteração pelo arquivo mbox.
+for line in mboxContent:
+	if "@" in line:
+		"""
+		Pegamos somente as linhas que contenham um @, porque é o unico caracter em comum em qualquer email.
+		"""
+		# Usamos regex para poder separar os emails dos outros caracteres que possam estar grudados aos emails.
+		emails = re.findall(r"[A-Za-z0-9\.\-+_]+@[A-Za-z0-9\.\-+_]+\.[A-Za-z]+", line)
+		if emails:
+			for email in emails:
+				user, domain = email.lower().split("@")
+
+				if domain.startswith(nossosDominios) or domain.startswith(dominiosLiberados):
+					"""
+					Caso seja um dos nossos Dominios ou um dos Dominios liberados.
+					"""
+					continue
+
+				elif domain.startswith(dominiosPublicos):
+					"""
+					Caso seja um dos Dominios Publicos, vamos passar o email inteiro (usuario@dominioPublico.com).
+					"""
+					emailSpam = email
+
+				elif domain.endswith(dominiosPublicos):
+					"""
+					Caso seja um dos Dominios Publicos, porem tenha um subdominio vamos passar o dominio inteiro (sub1.dominioPublico.com).
+					"""
+					emailSpam = domain
+
+				else:
+					# Pegamos então o dominio do email (SUBd1.dominio.com) e tiramos o subDominio (dominio.com).
+					domainWithoutSubdomain = tldextract.extract(domain).registered_domain
+					emailSpam = domainWithoutSubdomain
+
+				if emailSpam not in emailsSpam:
+					"""
+					Caso esse dominio/email, não estiver na lista, então adicionamos ele à lista.
+					"""
+					emailsSpam.append(emailSpam)
+
+# Agora criamos um txt com os dominios/emails que a gente coletou e colocamos um em cada linha.
+listaEmailsSpam = open(resultFolder+"listaEmailsSpam.txt", "w")
+listaEmailsSpam.write("#Essa lista são todos os dominios/emails de spam no mbox:" + "\n")
+for email in emailsSpam:
+	if email:
+		listaEmailsSpam.write(email + "\n")
+listaEmailsSpam.close()

@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""
+Esse código tem como utilidade, pegar 2 arquivos txt, 'listaEmailsSpam.txt'(Lista de todos os emails de spam) e a 
+'emailsSpamBloqueados.txt'(Lista de emails que já foram bloqueados) e assim tirando os emails que ja foram bloqueados, da lista de
+todos os emails, para sobrar somente os que não foram bloqueados 'resultadoEmailsSpam.txt'.
+
+Disclaimer:
+Esse código está sendo criado com o principal objetivo de combater Spammers e Scammers. Esse projeto é aberto e pode ser utilizado
+por todos, porém a sua utilização para ajudar Spammers ou Scammers é totalmente desemcorajada e não apoiada pelos desemvolvedores.
+"""
+
+# Subpasta result para guardar os resultados
+resultFolder = "./resultado/"
+
+# Declaração do array de dominios e emails de Spam
+emailsSpam = []
+
+# Leitura do arquivo que contem todos os emails de spam.
+listaEmailsSpamFile="listaEmailsSpam.txt"
+with open(resultFolder+listaEmailsSpamFile) as file:
+    listaEmailsSpam = file.readlines()[1:] # Linha 0 é somente um comentario.
+
+# Leitura do arquivo que contem os emails de spam que foram bloqueados.
+emailsSpamBloqueadosFile="emailsSpamBloqueados.txt"
+with open(resultFolder+emailsSpamBloqueadosFile) as file:
+    emailsSpamBloqueados = file.readlines()[1:] # Linha 0 é somente um comentario.
+
+for email in listaEmailsSpam:
+    if email not in emailsSpamBloqueados:
+        """
+        Percorre por todos os emails e só adiciona no emailsSpam os emails que não foram bloqueados.
+        """
+        emailsSpam.append(email)
+
+# Escreve no arquivo 'resultadoEmailsSpam.txt' os emails do emailsSpam
+emailsSpamFile = open(resultFolder+"resultadoEmailsSpam.txt","w")
+emailsSpamFile.write("#Essa lista são os dominios/emails de spam no mbox que ainda não foram bloquados:" + "\n")
+for email in emailsSpam:
+    if email:
+        if email.endswith("\n"):
+            """
+            Caso o email já tenha a quebra de linha, não adicionamos outra quebra de linha.
+            """
+            emailsSpamFile.write(email)
+        else:
+            """
+            Caso o email não tenha a quebra de linha, adicionamos outra quebra de linha.
+            """
+            emailsSpamFile.write(email+"\n")
+emailsSpamFile.close()
